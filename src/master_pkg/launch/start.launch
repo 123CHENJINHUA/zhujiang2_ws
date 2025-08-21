@@ -1,0 +1,10 @@
+<launch>
+    <!-- 启动tracer机器人底盘 -->
+    <include file="$(find tracer_bringup)/launch/tracer_robot_base.launch" />
+
+    <!-- 再启动主控相关节点 -->
+    <node pkg="master_pkg" type="task_manager_node" name="task_manager" output="screen" />
+    <node pkg="master_pkg" type="delivery_node" name="delivery" output="screen" />
+    <node pkg="ui_pkg" type="main2.py" name="ui" output="screen" />
+    <node pkg="navigation_pkg" type="navigation_node" name="navigation" output="screen" />
+</launch>

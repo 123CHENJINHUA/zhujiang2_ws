@@ -1,0 +1,34 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+  <qresource prefix="/icons">
+    <file>../icons/background.png</file>
+    <file>../icons/battery_25.png</file>
+    <file>../icons/battery_50.png</file>
+    <file>../icons/battery_charging_full.png</file>
+    <file>../icons/battery_full.png</file>
+    <file>../icons/Box.png</file>
+    <file>../icons/CustomerService.png</file>
+    <file>../icons/down-arrow.png</file>
+    <file>../icons/Face.png</file>
+    <file>../icons/Finish.png</file>
+    <file>../icons/hand.png</file>
+    <file>../icons/Logo.png</file>
+    <file>../icons/only package.png</file>
+    <file>../icons/package.png</file>
+    <file>../icons/package_in_box.png</file>
+    <file>../icons/Signal_1.png</file>
+    <file>../icons/Signal_2.png</file>
+    <file>../icons/Signal_3.png</file>
+    <file>../icons/Signal_Airplane Mode.png</file>
+    <file>../icons/Signal_Full.png</file>
+    <file>../icons/Signal_no.png</file>
+    <file>../icons/takeaway.png</file>
+    <file>../icons/wifi_1.png</file>
+    <file>../icons/wifi_2.png</file>
+    <file>../icons/wifi_3.png</file>
+    <file>../icons/wifi_full.png</file>
+    <file>../icons/wifi_no.png</file>
+    <file>../icons/Robot-Face.gif</file>
+    <file>../icons/package_out.gif</file>
+  </qresource>
+</RCC>

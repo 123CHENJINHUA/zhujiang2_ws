@@ -1,0 +1,14 @@
+# 目标（Goal）
+int32 building
+int32 unit
+int32 floor
+int32 room
+
+---
+# 结果（Result）
+bool success
+string info
+
+---
+# 反馈（Feedback）
+int16 status

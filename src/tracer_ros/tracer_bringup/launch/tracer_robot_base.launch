@@ -1,0 +1,10 @@
+<launch>
+    <include file="$(find tracer_base)/launch/tracer_base.launch" >
+        <arg name="port_name" default="can0" />
+        <arg name="simulated_robot" default="false" />
+    </include>
+    <!-- $$$$$$$$$$$$$$加载urdf $$$$$$$$$$$$$$-->
+    <include file="$(find tracer_description)/launch/display_models.launch" >
+    </include>
+	<node pkg="tf" type="static_transform_publisher" name="tracer2bodyfoot" args="-0.0 0 0 0 0 0 body_foot_2d base_link 1" /> 
+</launch>

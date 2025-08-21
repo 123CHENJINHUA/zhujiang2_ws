@@ -1,0 +1,5 @@
+# 客户端请求时发送的两个数字
+string delivery_msgs
+---
+# 服务器响应发送的数据
+bool status_msgs

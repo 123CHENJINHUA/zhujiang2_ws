@@ -1,0 +1,5 @@
+# 客户端请求时发送
+int16 pickup_code
+---
+# 服务器响应发送的数据
+bool success

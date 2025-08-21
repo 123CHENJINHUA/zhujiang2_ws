@@ -1,0 +1,7 @@
+<launch>
+
+    <!-- 再启动主控相关节点 -->
+    <node pkg="unique_move_pkg" type="pose_estimation_node" name="pose_estimation" output="screen" />
+    <node pkg="unique_move_pkg" type="unique_move_node.py" name="unique_move" output="screen" />
+
+</launch>
