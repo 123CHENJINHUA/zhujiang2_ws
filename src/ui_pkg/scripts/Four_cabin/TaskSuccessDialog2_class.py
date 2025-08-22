@@ -2,12 +2,13 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from ui_pkg.scripts.Four_cabin.TaskSuccessDialog2 import Ui_Dialog
 
 class TaskSuccessDialog(QtWidgets.QDialog, Ui_Dialog):
-    def __init__(self, comm_node = None, addresses=None, formatted_address = None, parent=None):
+    def __init__(self, comm_node = None, addresses=None, bin_numbers=None, delivery_addresses=None, parent=None):
         super().__init__(parent)
         self.setupUi(self)
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.comm_node = comm_node  # 保存通信节点引用
-        self.formatted_address = formatted_address  # 保存格式化地址
+        self.bin_numbers = bin_numbers  # 保存箱号列表
+        self.delivery_addresses = delivery_addresses  # 保存配送地址列表
         
         # 设置对话框大小为863*464，背景为白色，带16px圆角
         self.setFixedSize(863, 464)
@@ -112,9 +113,9 @@ class TaskSuccessDialog(QtWidgets.QDialog, Ui_Dialog):
     def on_confirm(self):
         """确认按钮点击处理"""
 
-        resp = self.comm_node.call_ui_get(self.formatted_address)
+        resp = self.comm_node.call_ui_get(self.bin_numbers, self.delivery_addresses)
         if resp and resp.received:
-            print("配送信息已发布:", self.formatted_address)
+            print("配送信息已发布:", self.bin_numbers, self.delivery_addresses)
         else:
             print("配送服务调用失败！")
 

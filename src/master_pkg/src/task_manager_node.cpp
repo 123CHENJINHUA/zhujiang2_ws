@@ -39,21 +39,23 @@ void TaskManagerNode::robot_status_update() {
     network_ = "Good"; // 假设网络状态良好
 
     // 用 current_task_ 和 rest_task_ 更新显示内容
-    if (!current_task_.empty()) {
-        current_task_show_ = std::to_string(current_task_[0]) + "栋" +
-                             std::to_string(current_task_[1]) + "单元" +
-                             std::to_string(current_task_[2]) + "层" +
-                             std::to_string(current_task_[3]) + "号";
+    if (!current_task_.address.empty()) {
+        current_task_show_ = "箱" + std::to_string(current_task_.bin_number) + ": " +
+                           std::to_string(current_task_.address[0]) + "栋" +
+                           std::to_string(current_task_.address[1]) + "单元" +
+                           std::to_string(current_task_.address[2]) + "层" +
+                           std::to_string(current_task_.address[3]) + "号";
     } else {
         current_task_show_.clear();
     }
 
     rest_task_show_.clear();
     for (const auto& t : rest_task_) {
-        std::string task_str = std::to_string(t[0]) + "栋" +
-                               std::to_string(t[1]) + "单元" +
-                               std::to_string(t[2]) + "层" +
-                               std::to_string(t[3]) + "号";
+        std::string task_str = "箱" + std::to_string(t.bin_number) + ": " +
+                             std::to_string(t.address[0]) + "栋" +
+                             std::to_string(t.address[1]) + "单元" +
+                             std::to_string(t.address[2]) + "层" +
+                             std::to_string(t.address[3]) + "号";
         rest_task_show_.push_back(task_str);
     }
 }
@@ -182,25 +184,36 @@ bool TaskManagerNode::uiGetCallback(robot_msgs::ui_get::Request& req, robot_msgs
     std::lock_guard<std::mutex> lock(task_list_mutex_); // 加锁
     task_list_.clear();
 
-    // 解析请求字符串
-    std::stringstream ss_groups(req.delivery_list.c_str());
-    std::string group;
-    while (std::getline(ss_groups, group, ';')) {
-        std::vector<int> task;
-        std::stringstream ss_values(group);
+    // 检查箱号和地址数组长度是否匹配
+    if (req.bin_numbers.size() != req.delivery_addresses.size()) {
+        ROS_ERROR("Bin numbers and addresses count mismatch");
+        res.received = false;
+        return true;
+    }
+
+    // 处理每个箱号和对应的地址
+    for (size_t i = 0; i < req.bin_numbers.size(); ++i) {
+        DeliveryTask task;
+        task.bin_number = req.bin_numbers[i];
+
+        // 解析地址字符串
+        std::stringstream ss(req.delivery_addresses[i]);
         std::string value;
-        while (std::getline(ss_values, value, ',')) {
+        while (std::getline(ss, value, ',')) {
             try {
-                task.push_back(std::stoi(value));
+                task.address.push_back(std::stoi(value));
             } catch (...) {
                 // 解析失败，返回错误
                 res.received = false;
                 return true;
             }
         }
-        if (task.size() == 4) {
+
+        // 验证地址格式是否正确（需要4个值：building, unit, floor, room）
+        if (task.address.size() == 4) {
             task_list_.push_back(task);
         } else {
+            ROS_ERROR("Invalid address format for bin %d", task.bin_number);
             res.received = false;
             return true;
         }
@@ -225,12 +238,12 @@ void TaskManagerNode::action_client_setup() {
     ROS_INFO("Connected to navigation action server.");
 }
 
-void TaskManagerNode::sendDeliveryGoal(const std::vector<int>& task) {
+void TaskManagerNode::sendDeliveryGoal(const DeliveryTask& task) {
     robot_msgs::deliveryGoal goal;
-    goal.building = task[0];
-    goal.unit = task[1];
-    goal.floor = task[2];
-    goal.room = task[3];
+    goal.building = task.address[0];
+    goal.unit = task.address[1];
+    goal.floor = task.address[2];
+    goal.room = task.address[3];
 
     auto feedback_cb = [this](const robot_msgs::deliveryFeedbackConstPtr& feedback) {
         task_process_ = feedback->status; // 更新任务状态
@@ -326,23 +339,30 @@ void TaskManagerNode::taskAssign_setup() {
 }
 
 // 任务分配函数
-void TaskManagerNode::assignTask(const std::vector<std::vector<int>>& tasks) {
+void TaskManagerNode::assignTask(const std::vector<DeliveryTask>& tasks) {
     if (!tasks.empty()) {
         current_task_ = tasks.front();
         rest_task_.clear();
-        for (size_t i = 1; i < tasks.size(); ++i) {
-            rest_task_.push_back(tasks[i]);
-        }
+        rest_task_.insert(rest_task_.end(), tasks.begin() + 1, tasks.end());
     } else {
-        current_task_.clear();
+        current_task_.address.clear();  // 清空当前任务的地址
         rest_task_.clear();
     }
 }
 
 void TaskManagerNode::sortTaskList() {
     std::sort(task_list_.begin(), task_list_.end(),
-        [](const std::vector<int>& a, const std::vector<int>& b) {
-            return a < b; // 按字典序升序
+        [](const DeliveryTask& a, const DeliveryTask& b) {
+            // 首先按楼栋排序
+            if (a.address[0] != b.address[0]) return a.address[0] < b.address[0];
+            // 然后按单元排序
+            if (a.address[1] != b.address[1]) return a.address[1] < b.address[1];
+            // 再按楼层排序
+            if (a.address[2] != b.address[2]) return a.address[2] < b.address[2];
+            // 最后按房间号排序
+            if (a.address[3] != b.address[3]) return a.address[3] < b.address[3];
+            // 如果地址完全相同，按箱号排序
+            return a.bin_number < b.bin_number;
         });
 }
 

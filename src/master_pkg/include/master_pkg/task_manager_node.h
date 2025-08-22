@@ -35,12 +35,16 @@ class TaskManagerNode {
 
 private:
 
-    // 用于存储待配送目标的列表
-    std::vector<std::vector<int>> task_list_;
-    std::vector<int> current_task_;
-    std::vector<std::vector<int>> rest_task_; 
+    // 存储待配送目标的结构
+    struct DeliveryTask {
+        int bin_number;           // 箱号
+        std::vector<int> address; // 地址数组 [building, unit, floor, room]
+    };
+    std::vector<DeliveryTask> task_list_;    // 待处理任务列表
+    DeliveryTask current_task_;              // 当前任务
+    std::vector<DeliveryTask> rest_task_;    // 剩余任务
 
-    void assignTask(const std::vector<std::vector<int>>& tasks);
+    void assignTask(const std::vector<DeliveryTask>& tasks);
     void taskAssignLoop();
     void sortTaskList();
     std::mutex task_list_mutex_; 
@@ -106,7 +110,7 @@ private:
     bool deliveryCmd(robot_msgs::delivery& req);
 
     // 动作客户端调用函数
-    void sendDeliveryGoal(const std::vector<int>& task);
+    void sendDeliveryGoal(const DeliveryTask& task);
     void sendGoBackGoal(const std::vector<int>& task);
 
     // 回调函数声明

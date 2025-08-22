@@ -102,10 +102,11 @@ class UiNode(QObject):
         rospy.loginfo("data: %s", msg.data)
 
     # 客户端
-    def call_ui_get(self, delivery_list):
+    def call_ui_get(self, bin_numbers, delivery_addresses):
         try:
             req = ui_getRequest()
-            req.delivery_list = delivery_list
+            req.bin_numbers = bin_numbers
+            req.delivery_addresses = delivery_addresses
             resp = self.ui_get_client.call(req)
             if resp.received:
                 rospy.loginfo("UI_get call success, task list received.")
@@ -386,7 +387,7 @@ class FourbinsWindow(QtWidgets.QWidget, Ui_Fourbins):
     返回主页和确认配送等功能。
     """
 
-    def __init__(self, comm_node, manager=None):
+    def __init__(self, manager=None, comm_node=None):
         super().__init__()
         self.setupUi(self)
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
@@ -398,14 +399,14 @@ class FourbinsWindow(QtWidgets.QWidget, Ui_Fourbins):
 
         # 货仓状态列表，每个元素包含状态、地址和图标
         self.bin_status = [
-            {"status": "空闲状态", "address": "--", "image": "Box.png"},
-            {"status": "空闲状态", "address": "--", "image": "Box.png"},
-            {"status": "空闲状态", "address": "--", "image": "Box.png"},
-            {"status": "空闲状态", "address": "--", "image": "Box.png"},
+            {"status": "空闲状态", "address": "--", "image": "Box.png", "idx": 0},
+            {"status": "空闲状态", "address": "--", "image": "Box.png", "idx": 1},
+            {"status": "空闲状态", "address": "--", "image": "Box.png", "idx": 2},
+            {"status": "空闲状态", "address": "--", "image": "Box.png", "idx": 3},
         ]
 
         # 状态栏注册和定时刷新
-        status_bar_ctrl.register(self.label, None, self.signalLabel_2, self.wifiLabel_2, self.label_5)
+        status_bar_ctrl.register(self.label, None, self.signalLabel_2, self.wifiLabel_2, self.label_5,self.comm_node)
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(lambda: status_bar_ctrl.refresh(self.label, None, self.signalLabel_2, self.wifiLabel_2, self.label_5,self.comm_node))
         self.timer.start(1000)
@@ -444,17 +445,17 @@ class FourbinsWindow(QtWidgets.QWidget, Ui_Fourbins):
 
     def handle_bin_button(self, bin_index):
         try:
-            self.comm_node.publish_door_open(door_number=bin_index) #打开仓门
             status = self.bin_status[bin_index]["status"]
             # 如果仓门空闲，则由 WindowManager 打开送货窗口
             if status == "空闲状态":
+                self.comm_node.publish_door_open(door_number=bin_index) #打开仓门
                 if self.manager:
                     self.manager.show_send_window(bin_index)
             elif status == "已装货":
                 # 已装货状态显示详情
                 QtWidgets.QMessageBox.information(
                     self,
-                    "包裹详情",
+                    "已有包裹",
                     f"{bin_index + 1}号仓已经有包裹\n配送地址: {self.bin_status[bin_index]['address']}",
                 )
             else:
@@ -576,10 +577,12 @@ class FourbinsWindow(QtWidgets.QWidget, Ui_Fourbins):
         # 获取所有已装货货仓的地址
         addresses = [bin_info["address"] for bin_info in loaded_bins]
 
-        # 获取所有已装货货仓的地址并转换格式
+        # 获取所有已装货货仓的箱号和地址
+        bin_numbers = []
         addresses_send = []
         for bin_info in loaded_bins:
             addr = bin_info["address"]  # 例如: "1栋2单元301室"
+            
             
             # 提取栋号 (去掉"栋"字)
             building = addr.split('栋')[0]
@@ -601,14 +604,12 @@ class FourbinsWindow(QtWidgets.QWidget, Ui_Fourbins):
                 # 处理其他情况，可以根据需要添加
                 continue
                 
+            bin_numbers.append(bin_info["idx"])  # 添加箱号
             # 添加到地址列表
             addresses_send.append(f"{building},{unit},{floor},{room_num}")
         
-        # 将所有地址用分号连接
-        formatted_address_send = ";".join(addresses_send)
-        
         # 创建并显示任务成功对话框
-        dialog = TaskSuccessDialog(comm_node=self.comm_node, addresses=addresses, formatted_address=formatted_address_send, parent=self)
+        dialog = TaskSuccessDialog(comm_node=self.comm_node, addresses=addresses, bin_numbers=bin_numbers, delivery_addresses=addresses_send, parent=self)
         result = dialog.exec_()
         
         if result == QtWidgets.QDialog.Accepted:
@@ -635,7 +636,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     切换，不直接创建 FourbinsWindow。
     """
 
-    def __init__(self, comm_node, manager=None):
+    def __init__(self, manager=None, comm_node=None):
         super().__init__()
         self.setupUi(self)
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)

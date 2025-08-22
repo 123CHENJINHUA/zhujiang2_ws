@@ -8,13 +8,14 @@ class FaceWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     构造函数接受 WindowManager 引用，用于切换界面。
     """
 
-    def __init__(self, manager=None):
+    def __init__(self, manager=None, comm_node=None):
         super().__init__()
         self.setupUi(self)
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
 
         # 窗口管理器
         self.manager = manager
+        self.comm_node = comm_node
 
         # 设置 GIF 动画
         self.movie = QtGui.QMovie(":/icons/icons/Robot-Face.gif")

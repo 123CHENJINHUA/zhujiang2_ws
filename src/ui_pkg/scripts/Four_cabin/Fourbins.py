@@ -478,7 +478,7 @@ class Ui_Form(object):
         self.ConfirmButton.setMaximumSize(QtCore.QSize(10000, 54))
         font = QtGui.QFont()
         font.setFamily("Microsoft YaHei")
-        font.setPointSize(-1)
+        # font.setPointSize(-1)
         font.setBold(True)
         font.setWeight(75)
         self.ConfirmButton.setFont(font)

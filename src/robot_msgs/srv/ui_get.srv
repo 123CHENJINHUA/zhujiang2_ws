@@ -1,3 +1,4 @@
-string delivery_list
+int32[] bin_numbers
+string[] delivery_addresses
 ---
 bool received
