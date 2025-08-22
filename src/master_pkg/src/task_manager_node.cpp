@@ -245,6 +245,10 @@ void TaskManagerNode::sendDeliveryGoal(const DeliveryTask& task) {
     goal.floor = task.address[2];
     goal.room = task.address[3];
 
+    int door_num = task.bin_number;
+    ROS_INFO("Sending delivery goal: %d, %d, %d, %d, bin: %d",
+             goal.building, goal.unit, goal.floor, goal.room, door_num);
+
     auto feedback_cb = [this](const robot_msgs::deliveryFeedbackConstPtr& feedback) {
         task_process_ = feedback->status; // 更新任务状态
     };

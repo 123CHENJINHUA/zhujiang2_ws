@@ -719,42 +719,31 @@ class WindowManager:
 
     def show_main_window(self):
         """
-        显示主页界面。如果不存在则创建。先显示新界面并刷新界面，
-        再立即隐藏其它界面，减少界面切换时的闪烁。
+        显示主页界面。如果不存在则创建。使用单次显示操作避免重复渲染。
         """
         if not self.main_window:
             self.main_window = MainWindow(manager=self,comm_node=self.comm_node)
-        # 先显示主窗口并置顶
-        # 使用 showFullScreen 确保窗口立即全屏，减少切换闪烁
-        self.main_window.showFullScreen()
-        self.main_window.raise_()
-        self.main_window.activateWindow()
-        # 强制刷新，使界面立即绘制
-        QtWidgets.QApplication.processEvents()
-        # 隐藏其他窗口
+        # 先隐藏其他窗口
         self._hide_others(exclude=self.main_window)
+        # 一次性显示主窗口
+        self.main_window.showFullScreen()
 
 
     def show_fourbins_window(self):
         """
-        显示四仓界面。如果不存在则创建。先显示并刷新界面，再隐藏其它
-        窗口，减少切换时的闪烁。
+        显示四仓界面。如果不存在则创建。使用单次显示操作避免重复渲染。
         """
         if not self.fourbins_window:
             self.fourbins_window = FourbinsWindow(manager=self,comm_node=self.comm_node)
-        # 显示并置顶四仓窗口
-        self.fourbins_window.showFullScreen()
-        self.fourbins_window.raise_()
-        self.fourbins_window.activateWindow()
-        QtWidgets.QApplication.processEvents()
-        # 隐藏其他窗口
+        # 先隐藏其他窗口
         self._hide_others(exclude=self.fourbins_window)
+        # 一次性显示四仓窗口
+        self.fourbins_window.showFullScreen()
 
     def show_send_window(self, bin_index: int):
         """
-        显示送货地址选择窗口。每次打开时创建新窗口并注册地址确认
-        回调，以便在用户确认地址后更新四仓状态。先显示并刷新新窗口，
-        再隐藏其它窗口，减少闪烁。
+        显示送货地址选择窗口。每次打开时创建新窗口并注册地址确认回调。
+        使用单次显示操作避免重复渲染。
         """
         # 关闭旧的送货窗口
         if self.send_window:
@@ -765,13 +754,10 @@ class WindowManager:
         self.send_window.addressConfirmed.connect(
             lambda addr, idx=bin_index: self.handle_send_confirm(idx, addr)
         )
-        # 显示并置顶送货窗口
-        self.send_window.showFullScreen()
-        self.send_window.raise_()
-        self.send_window.activateWindow()
-        QtWidgets.QApplication.processEvents()
-        # 隐藏其他窗口
+        # 先隐藏其他窗口
         self._hide_others(exclude=self.send_window)
+        # 一次性显示送货窗口
+        self.send_window.showFullScreen()
 
     def handle_send_confirm(self, bin_index: int, address: str):
         """
@@ -789,18 +775,14 @@ class WindowManager:
 
     def show_face_window(self):
         """
-        显示人脸识别界面。如果不存在则创建。先显示并刷新人脸界面，
-        再隐藏其他界面，减少闪烁。
+        显示人脸识别界面。如果不存在则创建。使用单次显示操作避免重复渲染。
         """
         if not self.face_window:
             self.face_window = FaceWindow(manager=self, comm_node=self.comm_node)
-        # 显示并置顶人脸识别界面
-        self.face_window.showFullScreen()
-        self.face_window.raise_()
-        self.face_window.activateWindow()
-        QtWidgets.QApplication.processEvents()
-        # 隐藏其他窗口
+        # 先隐藏其他窗口
         self._hide_others(exclude=self.face_window)
+        # 一次性显示人脸识别界面
+        self.face_window.showFullScreen()
 
     def _hide_others(self, exclude):
         """
