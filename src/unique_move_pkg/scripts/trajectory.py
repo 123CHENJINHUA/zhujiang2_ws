@@ -1,4 +1,4 @@
-#!/home/cjh/miniconda3/envs/zhujiang2/bin/python
+#!/home/cjh/miniconda3/envs/zhujiang/bin/python
 import numpy as np
 from math import cos, sin
 
@@ -16,11 +16,11 @@ class CarTrajectory:
         self.trajectory = [(x, y)]  # 存储轨迹点
         self.orientation = [0]  # 初始朝向角度(弧度)
 
-        self.D = 0.3  # 小车前进的距离单位
+        self.D = 0.35  # 小车前进的距离单位
         self.L = 0.702  # 小车的长度单位
         self.W = 0.610  # 小车的宽度单位
         self.d = 0.3  # 离墙距离
-        self.k = 0.9  # 最大角度比例系数
+        self.k = 1  # 最大角度比例系数
         self.minimum_distance = 0.07  # 最小距离
         self.maximum_distance = 1.5  # 最大距离
         self.angle2wall = 0

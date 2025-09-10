@@ -13,6 +13,8 @@
 #include "robot_msgs/pick.h"
 #include "robot_msgs/Door_open.h"
 #include "robot_msgs/deliveryAction.h" 
+#include "robot_msgs/CheckMarkerId.h"
+#include "robot_msgs/unique_move.h"
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/server/simple_action_server.h>
 
@@ -71,6 +73,7 @@ private:
     // 功能函数
     void robot_voice(int num);
     void robot_calling(const std::string& msg);
+    void robot_door_control(const std::string& msg);
     void pickup_code_generation();
 
     // 发布者
@@ -80,6 +83,7 @@ private:
     ros::Publisher ui_show_pub_;
     ros::Publisher speach_client_;
     ros::Publisher calling_client_;
+    ros::Publisher door_control_pub_;
 
     void publishUiShowLoop();
 
@@ -91,6 +95,8 @@ private:
     // 客户端
     ros::ServiceClient delivery_cmd_client_;
     ros::ServiceClient delivery_door_open_client_;
+    ros::ServiceClient check_marker_id_client_;
+    ros::ServiceClient unique_move_client_;
 
     robot_msgs::delivery delivery_req;
 
@@ -108,6 +114,8 @@ private:
 
     // 服务通信客户端调用函数
     bool deliveryCmd(robot_msgs::delivery& req);
+    bool check_id(int door_num);
+    bool uniqueMove(const std::string& order);
 
     // 动作客户端调用函数
     void sendDeliveryGoal(const DeliveryTask& task);

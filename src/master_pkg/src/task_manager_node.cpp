@@ -10,6 +10,7 @@ TaskManagerNode::TaskManagerNode(ros::NodeHandle& nh)
     ui_show_pub_ = nh.advertise<robot_msgs::ui_show>("/UI_show", 10);
     speach_client_ = nh.advertise<std_msgs::String>("/speach", 10);
     calling_client_ = nh.advertise<std_msgs::String>("/calling", 10);
+    door_control_pub_ = nh.advertise<std_msgs::String>("/door_control", 10);
 
     // 订阅者
     tracer_status_sub_ = nh.subscribe("/tracer_status", 10, &TaskManagerNode::tracerStatusCallback, this);
@@ -19,6 +20,8 @@ TaskManagerNode::TaskManagerNode(ros::NodeHandle& nh)
     // 服务客户端
     delivery_cmd_client_ = nh.serviceClient<robot_msgs::delivery>("/delivery_cmd");
     pickup_client_ = nh.serviceClient<robot_msgs::pick>("/pickup");
+    check_marker_id_client_ = nh.serviceClient<robot_msgs::CheckMarkerId>("/check_marker_id");
+    unique_move_client_ = nh.serviceClient<robot_msgs::unique_move>("/unique_move_service");
 
 
     // 服务端
@@ -128,6 +131,8 @@ void TaskManagerNode::client_setup() {
     // 等待所有服务准备就绪
     ros::service::waitForService("/delivery_cmd");
     ros::service::waitForService("/pickup");
+    ros::service::waitForService("/check_marker_id");
+    ros::service::waitForService("/unique_move_service");
     ROS_INFO("All services are ready and action client is connected.");
 }
 
@@ -177,6 +182,48 @@ bool TaskManagerNode::door_ir_control(const std::string& status) {
     delivery_req.request.delivery_msgs = "ir " + status;
     return deliveryCmd(delivery_req);
 }
+
+//检查放置口是否被占用函数
+bool TaskManagerNode::check_id(int door_num) {
+    robot_msgs::CheckMarkerId req;
+    req.request.marker_id = door_num;
+    if (check_marker_id_client_.call(req)) {
+        if (req.response.found) {
+            ROS_INFO("%d is empty.", door_num);
+            robot_voice(21); // 21定位成功，开始贴边
+            return true; // Door is empty
+        } else {
+            ROS_INFO("%d is occupied.", door_num);
+            robot_voice(24); // 货柜被占用
+            return false; // Door is occupied
+        }
+    } else {
+        ROS_ERROR("Failed to call service check_marker_id for door %d", door_num);
+        return false; // Service call failed, assume occupied
+    }
+}
+
+bool TaskManagerNode::uniqueMove(const std::string& order) {
+    robot_msgs::unique_move req;
+    req.request.order = order;
+
+    if (unique_move_client_.call(req)) {
+        if (req.response.success) {
+            ROS_INFO("Unique move command '%s' succeeded", order.c_str());
+            return true;
+        } else {
+            ROS_WARN("Unique move command '%s' failed: %s", 
+                    order.c_str(), req.response.message.c_str());
+            return false;
+        }
+    } else {
+        ROS_ERROR("Failed to call unique_move service with order '%s'", 
+                    order.c_str());
+        return false;
+    }
+}
+
+
 
 // ui指令服务端回调实现
 bool TaskManagerNode::uiGetCallback(robot_msgs::ui_get::Request& req, robot_msgs::ui_get::Response& res) {
@@ -259,35 +306,29 @@ void TaskManagerNode::sendDeliveryGoal(const DeliveryTask& task) {
         feedback_cb);
 
     robot_voice(100); // 100对应播放歌曲的指令，行驶过程中播放歌曲
+    robot_door_control("open"); // 发送打开门指令
 
     delivery_ac_->waitForResult();
     if (delivery_ac_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
         const robot_msgs::deliveryResultConstPtr& result = delivery_ac_->getResult();
+        robot_door_control("stop"); // 发送停止开门指令
+
         if (result) {
             task_status_ = result->info; // 将info赋值给current_task_show_
             ROS_INFO("Delivery succeeded! info: %s", result->info.c_str());
             // 新增：如果完成，调用pickup服务
             if (result->info == "Finish") {
-                robot_msgs::pick srv;
-                srv.request.pickup_code = pickup_code_;
-                //语音提示
-                robot_voice(6); // 7是语音提示取件码
-                ROS_INFO("Waiting for pickup code input from UI...");
-                if (pickup_client_.call(srv)) {
-                    if (srv.response.success) {
-                        while(!Is_door_close)
-                        {
-                            robot_voice(19);
-                            ros::Duration(5.0).sleep();
-                        }
-                        robot_voice(18); // 18是语音提示取件成功
-                        ROS_INFO("Pickup code correct, pickup success!");
-                    } else {
-                        robot_voice(15); // 13是语音提示取件失败
-                        ROS_WARN("Pickup code failed 5 times or incorrect.");
+                if(check_id(door_num)){
+                    if (uniqueMove("move"))
+                    {
+                        robot_voice(22); //开始推送货物
+                        uniqueMove("out");
+                        robot_voice(23); //开始返回
                     }
-                } else {
-                    ROS_ERROR("Failed to call pickup service!");
+                    else
+                    {
+                        robot_voice(25); //配送失败
+                    }
                 }
             }
         } else {
@@ -295,6 +336,7 @@ void TaskManagerNode::sendDeliveryGoal(const DeliveryTask& task) {
         }
     } else {
         ROS_WARN("Delivery failed!");
+        robot_door_control("stop"); // 发送停止开门指令
     }
 }
 
@@ -421,6 +463,13 @@ void TaskManagerNode::robot_calling(const std::string& msg) {
     calling_msg.data = msg;
     calling_client_.publish(calling_msg);
     ROS_INFO("Robot calling command sent: %s", msg.c_str());
+}
+
+void TaskManagerNode::robot_door_control(const std::string& msg) {
+    std_msgs::String door_msg;
+    door_msg.data = msg;
+    door_control_pub_.publish(door_msg);
+    ROS_INFO("Robot door control command sent: %s", msg.c_str());
 }
 
 void TaskManagerNode::pickup_code_generation() {

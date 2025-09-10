@@ -1,8 +1,8 @@
-#!/home/cjh/miniconda3/envs/zhujiang2/bin/python
+#!/home/cjh/miniconda3/envs/zhujiang/bin/python
 
 import sys
-sys.path.insert(0, "/home/cjh/miniconda3/envs/zhujiang2/lib/python3.10/site-packages")
-sys.path.insert(0, "/home/cjh/zhujiang2_ws/src")
+# sys.path.insert(0, "/home/cjh/miniconda3/envs/zhujiang/lib/python3.10/site-packages")
+sys.path.insert(0, "/home/cjh/zhujiang_ws/src")
 
 import rospy
 from std_msgs.msg import String 

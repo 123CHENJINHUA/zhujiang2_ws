@@ -4,6 +4,9 @@
 #include "robot_msgs/deliveryAction.h"
 #include "move_base_msgs/MoveBaseAction.h"
 #include <map>
+#include <yaml-cpp/yaml.h>
+#include <ros/package.h>
+#include <sstream>
 
 class DeliveryActionServer
 {
@@ -16,16 +19,89 @@ public:
         as_.start();
         ROS_INFO("Delivery Action Server started.");
 
-        // Initialize room-to-position mapping
-        room_positions_ = {
-            {1, {{5.49, -1.1, 0.0}, {0.0, 0.0, -0.0098, 0.99}}}, // Position: x, y, z; Orientation: x, y, z, w
-            {2, {{13.14, -0.52, 0.0}, {0.0, 0.0, -0.0027, 0.99}}},
-            {3, {{21.60, 2.91, 0.0}, {0.0, 0.0, 0.69, 0.72}}},
-            {4, {{6.91, 2.53, 0.0}, {0.0, 0.0, 0.71, 0.71}}}
-            // Add more room mappings as needed
-        };
+        // Set default initial position (fallback if not found in YAML)
+        init_position_ = {{0.087, -1.585, 0.0}, {0.0, 0.0, 0.99, -0.0135}}; // Default position and orientation
+        
+        // Load addresses from YAML file (this may override init_position_ if 0,0,0,0 exists)
+        loadAddressesFromYAML();
+    }
 
-        init_position_ = {{0.26, -0.89, 0.0}, {0.0, 0.0, 0.99, -0.015}}; // Default position and orientation
+    void loadAddressesFromYAML()
+    {
+        try {
+            // Get the package path for unique_move_pkg
+            std::string pkg_path = ros::package::getPath("navigation_pkg");
+            std::string yaml_path = pkg_path + "/config/addresses.yaml";
+            
+            // Load the YAML file
+            YAML::Node addresses = YAML::LoadFile(yaml_path);
+            
+            for(const auto& address : addresses) {
+                std::string name = address.first.as<std::string>();
+                YAML::Node pos = address.second;
+                
+                // Parse position and rotation from YAML
+                std::vector<double> position = {
+                    pos["x"].as<double>(),
+                    pos["y"].as<double>(),
+                    pos["z"].as<double>()
+                };
+                
+                std::vector<double> rotation = {
+                    pos["rotation"]["x"].as<double>(),
+                    pos["rotation"]["y"].as<double>(),
+                    pos["rotation"]["z"].as<double>(),
+                    pos["rotation"]["w"].as<double>()
+                };
+                
+                // Parse the address format (e.g., "1,1,1,3")
+                std::vector<int> addr_components;
+                std::stringstream ss(name);
+                std::string component;
+                while (std::getline(ss, component, ',')) {
+                    addr_components.push_back(std::stoi(component));
+                }
+                
+                if (addr_components.size() == 4) {
+                    // Create a key using the address components
+                    AddressKey key = {
+                        addr_components[0], // building
+                        addr_components[1], // unit
+                        addr_components[2], // floor
+                        addr_components[3]  // room
+                    };
+                    
+                    // Store in the map
+                    address_positions_[key] = std::make_pair(position, rotation);
+                    
+                    // Check if this is the initial position (0,0,0,0)
+                    if (addr_components[0] == 0 && addr_components[1] == 0 && 
+                        addr_components[2] == 0 && addr_components[3] == 0) {
+                        init_position_ = std::make_pair(position, rotation);
+                        // ROS_INFO_STREAM("Loaded initial position from address " << name << 
+                        //     ": x=" << position[0] << 
+                        //     ", y=" << position[1] << 
+                        //     ", z=" << position[2] <<
+                        //     ", rotation: [" << rotation[0] << ", " << 
+                        //     rotation[1] << ", " << rotation[2] << ", " << 
+                        //     rotation[3] << "]");
+                    } 
+                    // else 
+                    // {
+                    //     ROS_INFO_STREAM("Loaded position for address " << name << 
+                    //         ": x=" << position[0] << 
+                    //         ", y=" << position[1] << 
+                    //         ", z=" << position[2] <<
+                    //         ", rotation: [" << rotation[0] << ", " << 
+                    //         rotation[1] << ", " << rotation[2] << ", " << 
+                    //         rotation[3] << "]");
+                    // }
+                }
+            }
+            ROS_INFO("Successfully loaded addresses from YAML file");
+        } catch (const std::exception& e) {
+            ROS_ERROR_STREAM("Error loading addresses from YAML: " << e.what());
+        }
     }
 
     void executeCB(const robot_msgs::deliveryGoalConstPtr& goal)
@@ -42,14 +118,23 @@ public:
         {
             ROS_INFO("Received delivery goal: %dB%dU%dF%dR", goal->building, goal->unit, goal->floor, goal->room);
 
-            // Find the target position for the room
-            auto it = room_positions_.find(goal->room);
-            if (it == room_positions_.end())
+            // Create address key from the goal
+            AddressKey key = {
+                goal->building,
+                goal->unit,
+                goal->floor,
+                goal->room
+            };
+
+            // Find the target position for the address
+            auto it = address_positions_.find(key);
+            if (it == address_positions_.end())
             {
-                ROS_ERROR("Room %d not found in mapping!", goal->room);
+                ROS_ERROR("Address %d,%d,%d,%d not found in mapping!", 
+                    goal->building, goal->unit, goal->floor, goal->room);
                 robot_msgs::deliveryResult result;
                 result.success = false;
-                result.info = "Room not found";
+                result.info = "Address not found";
                 as_.setAborted(result);
                 return;
             }
@@ -128,9 +213,22 @@ public:
     }
 
 private:
+    // Structure to hold address components
+    struct AddressKey {
+        int building;
+        int unit;
+        int floor;
+        int room;
+
+        bool operator<(const AddressKey& other) const {
+            return std::tie(building, unit, floor, room) <
+                   std::tie(other.building, other.unit, other.floor, other.room);
+        }
+    };
+
     actionlib::SimpleActionServer<robot_msgs::deliveryAction> as_;
     actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> move_base_client_;
-    std::map<int, std::pair<std::vector<double>, std::vector<double>>> room_positions_; // Room-to-position mapping
+    std::map<AddressKey, std::pair<std::vector<double>, std::vector<double>>> address_positions_; // Address-to-position mapping
     std::pair<std::vector<double>, std::vector<double>> init_position_; // Initial position and orientation
     std::vector<double> target_position;
     std::vector<double> target_orientation;

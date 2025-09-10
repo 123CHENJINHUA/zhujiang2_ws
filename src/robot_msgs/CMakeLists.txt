@@ -28,6 +28,7 @@ add_service_files(
   ui_get.srv
   pick.srv
   unique_move.srv
+  CheckMarkerId.srv
 )
 
 add_action_files(

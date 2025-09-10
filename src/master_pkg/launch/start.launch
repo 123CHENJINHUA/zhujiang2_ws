@@ -7,4 +7,8 @@
     <node pkg="master_pkg" type="delivery_node" name="delivery" output="screen" />
     <node pkg="ui_pkg" type="main2.py" name="ui" output="screen" />
     <node pkg="navigation_pkg" type="navigation_node" name="navigation" output="screen" />
+    <node pkg="door_control_pkg" type="door_control_node" name="door_control" output="screen" />
+    <node pkg="unique_move_pkg" type="marker_detection_service" name="marker_detection_service" output="screen" />
+    <node pkg="unique_move_pkg" type="pose_estimation_node" name="pose_estimation" output="screen" />
+    <node pkg="unique_move_pkg" type="unique_move_node.py" name="unique_move" output="screen" />
 </launch>
