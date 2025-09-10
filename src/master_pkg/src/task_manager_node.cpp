@@ -322,6 +322,7 @@ void TaskManagerNode::sendDeliveryGoal(const DeliveryTask& task) {
                     if (uniqueMove("move"))
                     {
                         robot_voice(22); //开始推送货物
+                        ros::Duration(60).sleep();
                         uniqueMove("out");
                         robot_voice(23); //开始返回
                     }

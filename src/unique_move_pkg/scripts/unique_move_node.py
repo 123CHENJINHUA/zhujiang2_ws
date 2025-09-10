@@ -2,7 +2,7 @@
 
 import sys
 # sys.path.insert(0, "/home/cjh/miniconda3/envs/zhujiang/lib/python3.10/site-packages")
-sys.path.insert(0, "/home/cjh/zhujiang_ws/src")
+sys.path.insert(0, "/home/cjh/zhujiang2_ws/src")
 
 import rospy
 from std_msgs.msg import String 
@@ -66,7 +66,7 @@ class UniqueMoveNode:
         self.angle2wall = None
         self.center2edge_offset = self.car.W / 2.0  # 小车中心到边缘的偏移量
         self.camera_angle_offset = 0
-        self.wall2edge_offset = 0.35
+        self.wall2edge_offset = 0.7 #0.35+0.35
 
         self.move_history = []  # 记录每步操作 (angle, distance)
 
@@ -311,6 +311,8 @@ class UniqueMoveNode:
                     # Update car's distance and angle
                     self.car.d = avg_distance2wall - self.center2edge_offset - self.wall2edge_offset
                     self.car.angle2wall = avg_angle2wall - self.camera_angle_offset
+
+                    rospy.loginfo(f"car.d {self.car.d},---->mini_dis {self.car.minimum_distance}")
 
                     if self.car.d <= self.car.minimum_distance:
                         # 回正 
