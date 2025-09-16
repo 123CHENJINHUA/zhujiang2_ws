@@ -137,5 +137,7 @@ void pub_setup();
 void client_setup();
 void action_client_setup();
 void taskAssign_setup();
+
+bool Door_Init();
     
 };

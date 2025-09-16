@@ -183,6 +183,28 @@ bool TaskManagerNode::door_ir_control(const std::string& status) {
     return deliveryCmd(delivery_req);
 }
 
+bool TaskManagerNode::Door_Init() {
+    // delivery_req.request.delivery_msgs = "Btestdoor1";
+    // if (!deliveryCmd(delivery_req)) return false;
+    // ros::Duration(1.0).sleep(); // 等待1秒
+    // delivery_req.request.delivery_msgs = "Btestdoor2";
+    // if (!deliveryCmd(delivery_req)) return false;
+    // ros::Duration(1.0).sleep(); // 等待1秒
+    delivery_req.request.delivery_msgs = "Btestdoor3";
+    if (!deliveryCmd(delivery_req)) return false;
+    ros::Duration(1.0).sleep(); // 等待1秒
+    delivery_req.request.delivery_msgs = "Btestdoor4";
+    if (!deliveryCmd(delivery_req)) return false;
+    ros::Duration(1.0).sleep(); // 等待1秒
+    delivery_req.request.delivery_msgs = "bigDoorACOMPLETE";
+    if (!deliveryCmd(delivery_req)) return false;
+    ros::Duration(1.0).sleep(); // 等待1秒
+    delivery_req.request.delivery_msgs = "bigDoorBCOMPLETE";
+    if (!deliveryCmd(delivery_req)) return false;
+
+    return true;
+}
+
 //检查放置口是否被占用函数
 bool TaskManagerNode::check_id(int door_num) {
     robot_msgs::CheckMarkerId req;
@@ -495,8 +517,10 @@ int main(int argc, char** argv) {
     node.client_setup();
     // 动作客户端设置
     node.action_client_setup();
+    // 大门初始化
+    node.Door_Init();
     // 启动工作流
-    node.taskAssign_setup();
+    node.taskAssign_setup(); 
     // 启动ROS事件循环
     ros::spin();
     return 0;

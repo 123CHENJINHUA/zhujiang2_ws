@@ -12,7 +12,7 @@ public:
     void closeSocket();
 
     int timeout_door_open = 90;
-    int timeout_delivery_cmd = 60;
+    int timeout_delivery_cmd = 120;
 
 private:
     int server_port_;

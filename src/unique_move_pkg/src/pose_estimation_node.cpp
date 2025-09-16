@@ -45,7 +45,7 @@ void markerCallback(const robot_msgs::MarkerArray::ConstPtr& data, tf::Transform
                 marker2dPosePub.publish(marker2dPose);
             }
         } catch (const tf::TransformException& ex) {
-            ROS_WARN("Failed to transform marker ID %d to map_3d: %s", marker.id, ex.what());
+            // ROS_WARN("Failed to transform marker ID %d to map_3d: %s", marker.id, ex.what());
         }
     }
 }
@@ -72,7 +72,7 @@ void bodyFootCallback(tf::TransformListener* tfListener) {
         bodyFoot2dPose.theta = theta;
         bodyFoot2dPosePub.publish(bodyFoot2dPose);
     } catch (const tf::TransformException& ex) {
-        ROS_WARN("Failed to transform body_foot_2d to map_3d: %s", ex.what());
+        // ROS_WARN("Failed to transform body_foot_2d to map_3d: %s", ex.what());
     }
 }
 
