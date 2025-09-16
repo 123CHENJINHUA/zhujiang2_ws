@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 
 catkin_package(
- INCLUDE_DIRS include
  CATKIN_DEPENDS roscpp rospy std_msgs robot_msgs 
 )
 
