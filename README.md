@@ -1,1 +1,122 @@
 珠江项目四仓版本
+
+//系统 ubuntu20.04 安装时所有第三方插件全部安装
+
+sudo apt-get update
+
+//输入法安装  https://www.cnblogs.com/it-Ren/p/15566581.html
+sudo apt install fcitx
+sudo apt install fcitx-googlepinyin
+
+//安装 gedit
+sudo apt install gedit
+
+//安装ros
+wget http://fishros.com/install -O fishros && bash fishros
+// [1]:一键安装(推荐):ROS(支持ROS/ROS2,树莓派Jetson)
+// [1]:更换系统源再继续安装
+// [2]:更换系统源并清理第三方源
+// [1]:自动测速选择最快的源
+// [3]:noetic(ROS1)
+// [1]:noetic(ROS1)桌面版
+
+//安装vscode
+//vscode 官网下载安装
+sudo dpkg -i code_1.103.2-1755709794_amd64.deb
+
+//安装网络
+sudo apt install net-tools
+sudo apt install openssh-server
+
+//安装miniconda以及环境
+
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+chmod +x Miniconda3-latest-Linux-x86_64.sh
+./Miniconda3-latest-Linux-x86_64.sh（全部yes）
+
+// 如果没有conda init就加这段到~/.bashrc
+// # >>> conda initialize >>>
+// # !! Contents within this block are managed by 'conda init' !!
+// __conda_setup="$('/home/cjh/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+// if [ $? -eq 0 ]; then
+//     eval "$__conda_setup"
+// else
+//     if [ -f "/home/cjh/miniconda3/etc/profile.d/conda.sh" ]; then
+//         . "/home/cjh/miniconda3/etc/profile.d/conda.sh"
+//     else
+//         export PATH="/home/cjh/miniconda3/bin:$PATH"
+//     fi
+// fi
+// unset __conda_setup
+// # <<< conda initialize <<<
+// conda deactivate
+
+//安装zhujiang虚拟环境
+conda create -n zhujiang python=3.10
+conda activate zhujiang
+cd zhujiang2_ws
+pip install playsound3
+pip install PyYAML 
+
+//在主环境安装一些包 (新建终端)
+sudo apt install python3-pip
+pip install playsound3
+pip install scipy
+
+//下载安装包 zhujiang2_ws nav_ws
+sudo apt install git-all
+git clone https://github.com/123CHENJINHUA/zhujiang2_ws.git
+git clone -b develop https://gitee.com/hutongandrew/cruise_robot.git nav_ws
+
+//安装librealsense
+sudo mkdir -p /etc/apt/keyrings
+curl -sSf https://librealsense.intel.com/Debian/librealsense.pgp | sudo tee /etc/apt/keyrings/librealsense.pgp > /dev/null
+sudo apt-get install apt-transport-https
+echo "deb [signed-by=/etc/apt/keyrings/librealsense.pgp] https://librealsense.intel.com/Debian/apt-repo `lsb_release -cs` main" | \
+sudo tee /etc/apt/sources.list.d/librealsense.list
+sudo apt-get update
+sudo apt-get install librealsense2-dkms
+sudo apt-get install librealsense2-udev-rules:amd64=2.55.1*
+sudo apt-get install librealsense2=2.55.1*
+sudo apt-get install librealsense2-gl=2.55.1*
+sudo apt-get install librealsense2-utils=2.55.1*
+sudo apt-get install librealsense2-dev=2.55.1*
+sudo apt-get install librealsense2-dbg=2.55.1*
+realsense-viewer(可以正常使用就代表安装成功）
+
+//安装livox_sdk
+cd ~/nav_ws/src/Livox-SDK2/
+mkdir build
+cd build
+cmake .. & make -j
+sudo make install
+
+//安装一些别的包为了通过编译
+sudo apt-get install libsdl-image1.2-dev
+sudo apt-get install ros-noetic-ddynamic-reconfigure
+sudo apt-get install ros-noetic-tf2-sensor-msgs
+sudo apt-get install ros-noetic-move-base-msgs
+sudo apt-get install ros-noetic-ecl-threads(为了装yocs-velocity-smoother，后续可能把这个包删掉）
+sudo apt-get install libasio-dev
+sudo apt-get install ros-noetic-serial
+
+//编译
+//先编译livox_ros_driver
+cd ~/nav_ws/src/livox_ros_driver2/
+source /opt/ros/noetic/setup.bash
+./build.sh ROS1
+
+//编译zhujiang2_ws
+cd zhujiang2_ws
+catkin_make -DCATKIN_WHITELIST_PACKAGES="robot_msgs"
+catkin_make -DCATKIN_WHITELIST_PACKAGES="unique_move_pkg"
+catkin_make -DCATKIN_WHITELIST_PACKAGES="tracer_ros"
+catkin_make -DCATKIN_WHITELIST_PACKAGES=""
+
+//改网段
+//一个改成 192.168.0.5
+//一个改成 192.168.1.5
+
+
+
+
