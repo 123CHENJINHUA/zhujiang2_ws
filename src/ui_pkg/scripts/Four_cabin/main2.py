@@ -64,6 +64,7 @@ class UiNode(QObject):
     def publish_door_open(self, door_number):
         """发布开门消息"""
         try:
+            door_number = door_number + 1  # 将0-3转换为1-4
             msg = Door_open()
             msg.door_num = door_number
             self.door_open_pub.publish(msg)
@@ -399,10 +400,10 @@ class FourbinsWindow(QtWidgets.QWidget, Ui_Fourbins):
 
         # 货仓状态列表，每个元素包含状态、地址和图标
         self.bin_status = [
-            {"status": "空闲状态", "address": "--", "image": "Box.png", "idx": 0},
             {"status": "空闲状态", "address": "--", "image": "Box.png", "idx": 1},
             {"status": "空闲状态", "address": "--", "image": "Box.png", "idx": 2},
             {"status": "空闲状态", "address": "--", "image": "Box.png", "idx": 3},
+            {"status": "空闲状态", "address": "--", "image": "Box.png", "idx": 4},
         ]
 
         # 状态栏注册和定时刷新

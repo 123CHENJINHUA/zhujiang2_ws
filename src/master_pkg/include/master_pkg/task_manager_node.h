@@ -102,6 +102,7 @@ private:
 
     bool push_out(int num);
     bool door_open(int num);
+    bool door_close();
     bool bigDoorOpen();
     bool door_ir_control(const std::string& status);
     bool Is_door_close = true;

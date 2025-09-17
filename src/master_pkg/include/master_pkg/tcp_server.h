@@ -3,6 +3,7 @@
 
 class TcpServer {
 public:
+    void clearSocketBuffer();
     TcpServer(int port,std::string allowed_ip);
     ~TcpServer();
     bool start();

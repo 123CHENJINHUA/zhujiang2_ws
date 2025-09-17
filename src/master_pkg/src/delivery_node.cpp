@@ -7,7 +7,8 @@ TcpServer* g_tcp_server = nullptr;
 bool deliveryCmdCallback(robot_msgs::delivery::Request& req, robot_msgs::delivery::Response& res) {
     if (g_tcp_server) {
         // ROS_INFO("Sending command to MCU: %s", req.delivery_msgs.c_str());
-        
+        // 发送消息前先清空 socket 缓冲区
+        g_tcp_server->clearSocketBuffer();
         // 发送消息前检查连接状态
         if (!g_tcp_server->sendMessage(req.delivery_msgs)) {
             ROS_ERROR("Failed to send message to MCU: %s", req.delivery_msgs.c_str());

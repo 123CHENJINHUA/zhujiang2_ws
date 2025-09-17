@@ -82,3 +82,13 @@ void TcpServer::closeSocket() {
         server_fd_ = -1;
     }
 }
+
+void TcpServer::clearSocketBuffer() {
+    if (client_fd_ < 0) return;
+    char buffer[1024];
+    int flags = MSG_DONTWAIT;
+    while (true) {
+        ssize_t len = recv(client_fd_, buffer, sizeof(buffer), flags);
+        if (len <= 0) break;
+    }
+}

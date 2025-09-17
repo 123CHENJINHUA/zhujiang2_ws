@@ -80,8 +80,9 @@ void TaskManagerNode::doorOpenCallback(const robot_msgs::Door_open::ConstPtr& ms
     robot_voice(20);
     robot_voice(19);
     // 创建线程执行门控制操作
-    std::thread door_control_thread([this]() {
-        bigDoorOpen();
+    std::thread door_control_thread([this, door_num = msg->door_num]() {
+        ROS_INFO("Opening door %d", door_num);
+        door_open(door_num);
         Is_door_close = true;
     });
     door_control_thread.detach(); // 分离线程，让它独立运行
@@ -138,39 +139,65 @@ void TaskManagerNode::client_setup() {
 
 // 客户端调用实现
 bool TaskManagerNode::deliveryCmd(robot_msgs::delivery& req) {
-    const int max_retries = 3;
-    const ros::Duration retry_delay(0.5); // 500ms
-    
-    for (int attempt = 1; attempt <= max_retries; ++attempt) {
-        if (delivery_cmd_client_.call(req)) {
-            if (req.response.status_msgs == true) {
-                ROS_INFO("Delivery cmd: %s : success (attempt %d)", req.request.delivery_msgs.c_str(), attempt);
-                return true;
-            }
-            ROS_ERROR("Delivery cmd: %s : failed (attempt %d)", req.request.delivery_msgs.c_str(), attempt);
-        } else {
-            ROS_ERROR("Failed to execute delivery command: %s (attempt %d)", req.request.delivery_msgs.c_str(), attempt);
+    // 只执行一次，不进行重试
+    if (delivery_cmd_client_.call(req)) {
+        if (req.response.status_msgs == true) {
+            ROS_INFO("Delivery cmd: %s : success", req.request.delivery_msgs.c_str());
+            return true;
         }
-        
-        // 如果不是最后一次尝试，等待后重试
-        if (attempt < max_retries) {
-            ROS_WARN("Retrying delivery command in %f seconds...", retry_delay.toSec());
-            retry_delay.sleep();
-        }
+        ROS_ERROR("Delivery cmd: %s : failed", req.request.delivery_msgs.c_str());
+    } else {
+        ROS_ERROR("Failed to execute delivery command: %s", req.request.delivery_msgs.c_str());
     }
     
-    ROS_ERROR("All attempts failed for command: %s", req.request.delivery_msgs.c_str());
     return false;
 }
 
 bool TaskManagerNode::push_out(int num) {
-    delivery_req.request.delivery_msgs = "push " + std::to_string(num);
+    if (num == 1) {
+        delivery_req.request.delivery_msgs = "pushDoorOne";
+    } else if (num == 2) {
+        delivery_req.request.delivery_msgs = "pushDoorTwo";
+    } else if (num == 3) {
+        delivery_req.request.delivery_msgs = "pushDoorThree";
+    } else if (num == 4) {
+        delivery_req.request.delivery_msgs = "pushDoorFour";
+    } else {
+        ROS_ERROR("Invalid door number: %d", num);
+        return false;
+    }
     return deliveryCmd(delivery_req);
 }
 
 bool TaskManagerNode::door_open(int num) {
-    delivery_req.request.delivery_msgs = "door " + std::to_string(num);
-    return deliveryCmd(delivery_req); 
+    if (num==1 || num==2) {
+        delivery_req.request.delivery_msgs = "BcloseBigDoor";
+        deliveryCmd(delivery_req);
+        ros::Duration(1.0).sleep(); // 等待1秒
+        delivery_req.request.delivery_msgs = "AopenBigDoor";
+        deliveryCmd(delivery_req);
+    }
+    else if (num==3 || num==4) {
+        delivery_req.request.delivery_msgs = "AcloseBigDoor";
+        deliveryCmd(delivery_req);
+        ros::Duration(1.0).sleep(); // 等待1秒
+        delivery_req.request.delivery_msgs = "BopenBigDoor";
+        deliveryCmd(delivery_req);
+    }
+    else {
+        ROS_ERROR("Invalid door number: %d", num);
+        return false;
+    }
+    return true;
+}
+
+bool TaskManagerNode::door_close() {
+    delivery_req.request.delivery_msgs = "AcloseBigDoor";
+    deliveryCmd(delivery_req);
+    ros::Duration(1.0).sleep(); // 等待1秒
+    delivery_req.request.delivery_msgs = "BcloseBigDoor";
+    deliveryCmd(delivery_req);
+    return true;
 }
 
 bool TaskManagerNode::bigDoorOpen() {
@@ -441,6 +468,7 @@ void TaskManagerNode::taskAssignLoop() {
     while (ros::ok()) { 
         task_cv_.wait(lock, [this]{ return !task_list_.empty() || !ros::ok(); });
         robot_voice(14); // 14是语音提示，配送开始
+        door_close();
 
         while (!task_list_.empty()) {
 
@@ -459,7 +487,9 @@ void TaskManagerNode::taskAssignLoop() {
             task_status_ = "working";
             assignTask(task_list_);
             task_list_.erase(task_list_.begin());
-            sendDeliveryGoal(current_task_);
+            // sendDeliveryGoal(current_task_);
+
+            push_out(current_task_.bin_number);
 
             // door_ir_control("off");
         }
