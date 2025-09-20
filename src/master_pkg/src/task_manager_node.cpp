@@ -211,12 +211,12 @@ bool TaskManagerNode::door_ir_control(const std::string& status) {
 }
 
 bool TaskManagerNode::Door_Init() {
-    // delivery_req.request.delivery_msgs = "Btestdoor1";
-    // if (!deliveryCmd(delivery_req)) return false;
-    // ros::Duration(1.0).sleep(); // 等待1秒
-    // delivery_req.request.delivery_msgs = "Btestdoor2";
-    // if (!deliveryCmd(delivery_req)) return false;
-    // ros::Duration(1.0).sleep(); // 等待1秒
+    delivery_req.request.delivery_msgs = "Btestdoor1";
+    if (!deliveryCmd(delivery_req)) return false;
+    ros::Duration(1.0).sleep(); // 等待1秒
+    delivery_req.request.delivery_msgs = "Btestdoor2";
+    if (!deliveryCmd(delivery_req)) return false;
+    ros::Duration(1.0).sleep(); // 等待1秒
     delivery_req.request.delivery_msgs = "Btestdoor3";
     if (!deliveryCmd(delivery_req)) return false;
     ros::Duration(1.0).sleep(); // 等待1秒
@@ -371,7 +371,7 @@ void TaskManagerNode::sendDeliveryGoal(const DeliveryTask& task) {
                     if (uniqueMove("move"))
                     {
                         robot_voice(22); //开始推送货物
-                        ros::Duration(60).sleep();
+                        push_out(door_num);
                         uniqueMove("out");
                         robot_voice(23); //开始返回
                     }
@@ -487,9 +487,9 @@ void TaskManagerNode::taskAssignLoop() {
             task_status_ = "working";
             assignTask(task_list_);
             task_list_.erase(task_list_.begin());
-            // sendDeliveryGoal(current_task_);
+            sendDeliveryGoal(current_task_);
 
-            push_out(current_task_.bin_number);
+            // push_out(current_task_.bin_number);
 
             // door_ir_control("off");
         }

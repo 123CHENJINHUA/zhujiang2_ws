@@ -21,7 +21,7 @@ class CarTrajectory:
         self.W = 0.610  # 小车的宽度单位
         self.d = 0.3  # 离墙距离
         self.k = 1  # 最大角度比例系数
-        self.minimum_distance = 0.07  # 最小距离
+        self.minimum_distance = 0.17  # 最小距离
         self.maximum_distance = 1.5  # 最大距离
         self.angle2wall = 0
         
