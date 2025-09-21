@@ -380,6 +380,9 @@ void TaskManagerNode::sendDeliveryGoal(const DeliveryTask& task) {
                         robot_voice(25); //配送失败
                     }
                 }
+                else{
+                    ros::Duration(1.0).sleep(); // 等待1秒
+                }
             }
         } else {
             ROS_INFO("Delivery succeeded! But result is null.");
