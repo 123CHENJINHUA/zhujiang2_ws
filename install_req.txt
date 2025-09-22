@@ -9,6 +9,10 @@ sudo apt install fcitx-googlepinyin
 //安装 gedit
 sudo apt install gedit
 
+//安装terminator
+sudo apt-get install terminator
+
+
 //安装ros
 wget http://fishros.com/install -O fishros && bash fishros
 // [1]:一键安装(推荐):ROS(支持ROS/ROS2,树莓派Jetson)

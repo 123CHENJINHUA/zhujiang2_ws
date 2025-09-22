@@ -1,5 +1,3 @@
-珠江项目四仓版本
-
 //系统 ubuntu20.04 安装时所有第三方插件全部安装
 
 sudo apt-get update
@@ -10,6 +8,10 @@ sudo apt install fcitx-googlepinyin
 
 //安装 gedit
 sudo apt install gedit
+
+//安装terminator
+sudo apt-get install terminator
+
 
 //安装ros
 wget http://fishros.com/install -O fishros && bash fishros
@@ -99,6 +101,9 @@ sudo apt-get install ros-noetic-move-base-msgs
 sudo apt-get install ros-noetic-ecl-threads(为了装yocs-velocity-smoother，后续可能把这个包删掉）
 sudo apt-get install libasio-dev
 sudo apt-get install ros-noetic-serial
+pip install open3d
+pip install rosnumpy
+
 
 //编译
 //先编译livox_ros_driver
@@ -116,6 +121,9 @@ catkin_make -DCATKIN_WHITELIST_PACKAGES=""
 //改网段
 //一个改成 192.168.0.5
 //一个改成 192.168.1.5
+修改/home/cjh/nav_ws/src/livox_ros_driver2/config/MID360_config.json的28行：
+‘"ip" : "192.168.1.139",’
+根据实际雷达sn码，将最后2位修改为sn码的最后2位
 
 
 
