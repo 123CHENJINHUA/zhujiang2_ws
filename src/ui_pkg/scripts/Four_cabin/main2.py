@@ -258,9 +258,9 @@ class SendWindow(QtWidgets.QWidget, Ui_Send2):
 
     def setup_frequent_addresses(self):
         frequent_addresses = [
-            {"building": "1", "unit": "2", "room": "301"},
-            {"building": "2", "unit": "3", "room": "502"},
-            {"building": "3", "unit": "1", "room": "101"}
+            {"building": "1", "unit": "1", "room": "101"},
+            {"building": "1", "unit": "1", "room": "102"},
+            {"building": "1", "unit": "1", "room": "103"}
         ]
         btns = [self.btnQuickAddr1, self.btnQuickAddr2, self.btnQuickAddr3]
         for idx, addr in enumerate(frequent_addresses):
